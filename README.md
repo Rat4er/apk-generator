@@ -3,6 +3,7 @@
 
 Tool for generate apk
 
+![chrome_GyrPD8iHcV](https://github.com/user-attachments/assets/5505fc7e-b826-48ba-a7de-84e78d0361cf)
 
 ## Run Locally
 
@@ -21,7 +22,7 @@ Install Docker and Docker Compose (example for Ubuntu):
 Go to the project directory
 
 ```bash
-  cd apk-generator-gui
+  cd apk-generator
 ```
 
 Create a .env file containing your domain. Example:
