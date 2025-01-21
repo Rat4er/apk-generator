@@ -1,4 +1,4 @@
--gui
+# apk-generator
 
 Tool for generate apk
 
