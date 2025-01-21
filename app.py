@@ -1,7 +1,9 @@
 import io
 import os
 import subprocess
-from flask import Flask, render_template, request, jsonify, send_file
+import uuid
+
+from flask import Flask, render_template, request, jsonify, send_file, after_this_request
 import yaml
 import shutil
 
@@ -13,87 +15,39 @@ os.makedirs(app.config['OUTPUTS_FOLDER'], exist_ok=True)
 
 
 def run_command(command):
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = [], []
-    while process.poll() is None:
-        line = process.stdout.readline()
-        if line:
-            stdout.append(line.decode("utf-8"))
-    stderr.extend(process.stderr.readlines())
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = process.communicate()
     if process.returncode != 0:
-        error_message = ''.join(stderr.decode("utf-8") for stderr in stderr)
-        raise Exception(f"Command failed: {command}\nError: {error_message}")
-    return stdout
+        raise Exception(f"Command failed: {' '.join(command)}\nError: {stderr.decode('utf-8')}")
+    return stdout.decode("utf-8").splitlines()
 
 
 def generate_apk(package_name, version_code, version_name, size_apk, keystore_path, keystore_alias, keystore_keypass,
                  keystore_pass):
-    total_steps = 5 if size_apk > 0 else 4
-    step = 0
-
+    unique_id = str(uuid.uuid4())
+    assets_dir = f"./apkdata/assets/{unique_id}"
+    os.makedirs(assets_dir, exist_ok=True)
+    output_apk = os.path.join(app.config['OUTPUTS_FOLDER'], f"{package_name}_{version_code}_{version_name}.apk")
     try:
-        print("Starting APK generation...")
-        step += 1
-
-        print("Generation of apk with params:")
-        print(f"package={package_name}")
-        print(f"versionCode={version_code}")
-        print(f"versionName={version_name}")
-        print(f"sizeAPK={size_apk}")
-        #print(f"outputDir={output_dir}")
-        print(f"keystorePath={keystore_path}")
-        print(f"keystoreAlias={keystore_alias}")
-
-        # Modify package
-        print("1) Modifying package...")
         edit_apktool_conf(package_name, version_code, version_name)
-        step += 1
-
-        # Generate temp file
         if size_apk > 0:
-            print("2) Generating temp file...")
-            if not os.path.exists("./apkdata/assets"):
-                os.mkdir("./apkdata/assets")
-            file_path = "./apkdata/assets/outputfile.tempfile"
-            with open(file_path, 'wb') as f:
+            temp_file_path = os.path.join(assets_dir, "outputfile.tempfile")
+            with open(temp_file_path, 'wb') as f:
                 f.write(b'\0' * (size_apk * 1024 * 1024 - 113999))
-            step += 1
+        run_command(["java", "-jar", "./utils/apktool_2.9.3.jar", "b", "apkdata", "--use-aapt2", "-o", output_apk])
+        run_command([
+            "java", "-jar", "./utils/uber-apk-signer-1.2.1.jar", "-a", output_apk,
+            "--ks", keystore_path, "--ksAlias", keystore_alias,
+            "--ksKeyPass", keystore_keypass, "--ksPass", keystore_pass
+        ])
+        return output_apk
 
-        # Build APK
-        print("3) Building APK...")
-        output_apk = os.path.join(f"outputs", f"{package_name}_{version_code}_{version_name}.apk")
-        for line in run_command(f"java -jar ./utils/apktool_2.9.3.jar b apkdata --use-aapt2 -o {output_apk}"):
-            print(line)
-        step += 1
-
-        # Sign APK
-        print("4) Signing APK...")
-        for loutput_dirine in run_command(
-                f"java -jar ./utils/uber-apk-signer-1.2.1.jar -a {output_apk} --ks {keystore_path} "
-                f"--ksAlias {keystore_alias} --ksKeyPass {keystore_keypass} --ksPass {keystore_pass}"):
-            print(line)
-        step += 1
-
-        # Remove old
-        print("5) Removing old files...")
-        if os.path.exists(output_apk):
-            os.remove(output_apk)
-        temp_file_path = "./apkdata/assets/outputfile.tempfile"
-        if os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
-
-        # Rename package
-        print("6) Renaming package...")
-        signed_apk = f"{package_name}_{version_code}_{version_name}-aligned-signed.apk"
-        final_apk = os.path.join(f"outputs", f"{signed_apk}")
-        if os.path.exists(signed_apk):
-            os.rename(signed_apk, final_apk)
-
-        print("APK generation completed.")
-        return final_apk
     except Exception as e:
-        print("APK generation failed.")
         raise e
+
+    finally:
+        if os.path.exists(assets_dir):
+            shutil.rmtree(assets_dir)
 
 
 def edit_apktool_conf(package_name, version_code, version_name):
@@ -136,10 +90,11 @@ def generate_apk_route():
         keystore_file.save(keystore_path)
 
     try:
-        final_apk = generate_apk(package_name, version_code, version_name, size_apk,
-                                 keystore_path, keystore_alias, keystore_keypass, keystore_pass)
+        final_apk = generate_apk(package_name, version_code, version_name, size_apk, keystore_path, keystore_alias,
+                                 keystore_keypass, keystore_pass)
 
-        return send_file(final_apk, as_attachment=True)
+        response = send_file(final_apk, as_attachment=True)
+        return response
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -147,7 +102,6 @@ def generate_apk_route():
 @app.route('/')
 def webprint():
     return send_file("index.html")
-
 
 @app.teardown_request
 def teardown_request_func(test):
@@ -159,6 +113,7 @@ def teardown_request_func(test):
         shutil.rmtree(f"{os.path.join(app.config['UPLOAD_FOLDER'])}")
     except:
         pass
+
 
 
 if __name__ == '__main__':
