@@ -1,5 +1,4 @@
-
-# apk-generator-gui
+-gui
 
 Tool for generate apk
 
