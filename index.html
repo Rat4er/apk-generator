@@ -6,46 +6,71 @@
     <title>APK Generator</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', Arial, sans-serif;
             margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
+            padding: 0;
+            background-color: #eef2f5;
+            color: #333;
         }
         .container {
             max-width: 600px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 50px auto;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
         }
         h1 {
             text-align: center;
+            color: #007bff;
         }
         h3 {
             text-align: center;
+            font-size: 16px;
+        }
+        h3 a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        h3 a:hover {
+            text-decoration: underline;
         }
         footer {
             text-align: center;
-            padding-top: 20px;
-            color: #000000;
-            color: rgba(0, 0, 0, 0.05);
+            padding: 20px 0;
+            font-size: 14px;
+            background-color: #f8f9fa;
+            margin-top: 30px;
+        }
+        footer a {
+            color: #007bff;
+            text-decoration: none;
         }
         form {
             display: flex;
             flex-direction: column;
+            gap: 15px;
         }
         label {
-            margin-top: 10px;
+            font-weight: 500;
         }
         input, select, button {
-            padding: 10px;
-            margin-top: 5px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        input:focus, select:focus, button:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
         }
         button {
             background-color: #007bff;
             color: #fff;
             border: none;
-            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
         }
         button:hover {
             background-color: #0056b3;
@@ -53,44 +78,53 @@
         .message {
             margin-top: 20px;
             text-align: center;
+            font-size: 16px;
+            color: #555;
+        }
+        .message.success {
+            color: #28a745;
+        }
+        .message.error {
+            color: #dc3545;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>APK Generator</h1>
-        <h3>How to create keystore and keys you can see <a href="https://coderwall.com/p/r09hoq/android-generate-release-debug-keystores">here</a></h3>
+        <h3>Learn how to create a keystore <a href="https://coderwall.com/p/r09hoq/android-generate-release-debug-keystores" target="_blank">here</a></h3>
         <form id="apkForm">
             <label for="package_name">Package Name</label>
-            <input type="text" id="package_name" name="package_name" required>
+            <input type="text" id="package_name" name="package_name" placeholder="com.example.app" required>
 
             <label for="version_code">Version Code</label>
-            <input type="number" id="version_code" name="version_code" required>
+            <input type="number" id="version_code" name="version_code" placeholder="1" required>
 
             <label for="version_name">Version Name</label>
-            <input type="text" id="version_name" name="version_name" required>
+            <input type="text" id="version_name" name="version_name" placeholder="1.0.0" required>
 
             <label for="size_apk">Size APK (MB)</label>
-            <input type="number" id="size_apk" name="size_apk">
+            <input type="number" id="size_apk" name="size_apk" placeholder="Optional">
 
             <label for="keystore_file">Keystore File</label>
-            <input type="file" id="keystore_file" name="keystore_file">
+            <input type="file" id="keystore_file" name="keystore_file" accept=".keystore, .jks" required>
 
             <label for="keystore_alias">Keystore Alias</label>
-            <input type="text" id="keystore_alias" name="keystore_alias" required>
+            <input type="text" id="keystore_alias" name="keystore_alias" placeholder="Alias Name" required>
 
             <label for="keystore_keypass">Keystore Keypass</label>
-            <input type="password" id="keystore_keypass" name="keystore_keypass" required>
+            <input type="password" id="keystore_keypass" name="keystore_keypass" placeholder="••••••••" required>
 
             <label for="keystore_pass">Keystore Pass</label>
-            <input type="password" id="keystore_pass" name="keystore_pass" required>
+            <input type="password" id="keystore_pass" name="keystore_pass" placeholder="••••••••" required>
 
             <button type="submit">Generate APK</button>
         </form>
         <div class="message" id="message"></div>
     </div>
-    <footer>Created by L3
-        <br>with love for RuStore❤️</footer>
+    <footer>
+        Created by <strong>L3</strong> with ❤️ for <a href="https://rustore.ru" target="_blank">RuStore</a>
+    </footer>
 
     <script>
         document.getElementById('apkForm').addEventListener('submit', async function (event) {
@@ -99,6 +133,7 @@
             const formData = new FormData(this);
             const messageDiv = document.getElementById('message');
             messageDiv.textContent = 'Generating APK...';
+            messageDiv.className = 'message';
 
             try {
                 const response = await fetch('/generate_apk', {
@@ -117,12 +152,15 @@
                     a.click();
                     window.URL.revokeObjectURL(url);
                     messageDiv.textContent = 'APK generated successfully!';
+                    messageDiv.classList.add('success');
                 } else {
                     const errorData = await response.json();
                     messageDiv.textContent = `Error: ${errorData.error}`;
+                    messageDiv.classList.add('error');
                 }
             } catch (error) {
                 messageDiv.textContent = `Error: ${error.message}`;
+                messageDiv.classList.add('error');
             }
         });
     </script>
