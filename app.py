@@ -1,12 +1,11 @@
 import io
 import os
+import shutil
 import subprocess
 import uuid
 
-from flask import Flask, request, jsonify, send_file
 import yaml
-import shutil
-import asyncio
+from flask import Flask, request, jsonify, send_file
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = './uploads'
@@ -51,7 +50,8 @@ async def generate_apk(package_name, version_code, version_name, size_apk, keyst
             os.remove(output_apk)
         if os.path.exists(assets_dir):
             shutil.rmtree(assets_dir)
-
+        if os.path.exists(keystore_path):
+            os.remove(keystore_path)
 
 async def edit_apktool_conf(package_name, version_code, version_name):
     with open("./apkdata/apktool.yml", "r+") as comp:
@@ -71,7 +71,6 @@ async def generate_apk_route():
     version_code = data.get('version_code')
     version_name = data.get('version_name')
     size_apk = int(data.get('size_apk', 0))
-    #output_dir = data.get('output_dir')
     keystore_alias = data.get('keystore_alias')
     keystore_keypass = data.get('keystore_keypass')
     keystore_pass = data.get('keystore_pass')
@@ -91,7 +90,6 @@ async def generate_apk_route():
             return_stream.write(apk.read())
         return_stream.seek(0)
         os.remove(final_apk_path)
-        shutil.rmtree(app.config['UPLOAD_FOLDER'])
         response = send_file(return_stream, mimetype='application/vnd.android.package-archive', download_name=final_apk)
         return response
     except Exception as e:
