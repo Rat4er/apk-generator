@@ -324,3 +324,7 @@ instance/*
 .webassets-cache
 .env
 
+/.idea/apk-generator_2.iml
+/.idea/misc.xml
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/vcs.xml
