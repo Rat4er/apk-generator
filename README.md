@@ -12,10 +12,10 @@ Clone the project
   git clone https://github.com/rat4er/apk-generator
 ```
 
-Install Docker and Docker Compose (example for Ubuntu):
+Install Docker and Docker Compose (example for Arch):
 
 ```bash
-  sudo apt-get install docker docker-compose -y
+  sudo pacman -S docker docker-compose
 ```
 
 Go to the project directory
