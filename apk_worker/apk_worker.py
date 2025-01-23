@@ -3,7 +3,29 @@ import os
 import shutil
 import subprocess
 import uuid
+from enum import unique
+
 import yaml
+from dotenv import load_dotenv
+
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path)
+
+async def generate_apk_v2(package_name, version_code, version_name, size_apk, keystore_path, keystore_password, alias, keypass):
+    unique_id = str(uuid.uuid4())
+    assets_dir = f"./apk_data_v2/app/src/main/assets/{unique_id}"
+    os.makedirs(assets_dir, exist_ok=True)
+    await set_parameters(package_name, version_code, version_name)
+    if size_apk > 0:
+        temp_file_path = os.path.join(assets_dir, "outputfile.tempfile")
+        with open(temp_file_path, 'wb') as f:
+            f.write(b'\0' * (size_apk * 1024 * 1024 - 113999))
+
+    await run_command_v2(['./gradlew', 'assembleRelease'])
+    apk_path = os.path.join("apk_data_v2", "app", "build", "outputs", "release", "app-release-unsigned.apk")
+    await sign_apk(apk_path, keystore_path, alias, keypass, keystore_password)
+
 
 
 async def generate_apk(output_folder, package_name, version_code, version_name, size_apk, keystore_path, keystore_alias,
@@ -55,6 +77,13 @@ async def edit_apktool_conf(package_name, version_code, version_name):
         comp.seek(0)
         yaml.dump(data, comp)
 
+async def run_command_v2(command):
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd='./apk_data_v2')
+    stdout, stderr = process.communicate()
+    if process.returncode != 0:
+        raise Exception(f"Command failed: {' '.join(command)}\nError: {stderr.decode('utf-8')}")
+    return stdout.decode("utf-8").splitlines()
+
 
 async def run_command(command):
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -70,3 +99,11 @@ async def return_io_stream(apk_path):
     return_stream.seek(0)
     os.remove(apk_path)
     return return_stream
+
+async def set_parameters(package_name, version_code, version_name):
+    os.environ["APPLICATION_ID"] = package_name
+    os.environ["VERSION_CODE"] = version_code
+    os.environ["VERSION_NAME"] = version_name
+
+async def sign_apk(apk_path, keystore_path, keystore_alias, keystore_keypass, keystore_pass):
+    await run_command_v2(["jarsigner","-verbose", "-sigalg", "SHA1withRSA", "-digestalg", "SHA1", "-keystore", keystore_path, "-storepass", keystore_pass, "-keypass", keystore_keypass, apk_path, keystore_alias, ])
