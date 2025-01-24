@@ -14,11 +14,11 @@ if os.path.exists(dotenv_path):
 
 async def generate_apk_v2(package_name, version_code, version_name, size_apk, keystore_path, keystore_password, alias, keypass):
     unique_id = str(uuid.uuid4())
-    assets_dir = f"./apk_data_v2/app/src/main/assets/{unique_id}"
+    assets_dir = f"./apk_data_v2/app/src/main/assets/"
     os.makedirs(assets_dir, exist_ok=True)
     await set_parameters(package_name, version_code, version_name)
     if size_apk > 0:
-        temp_file_path = os.path.join(assets_dir, "outputfile.tempfile")
+        temp_file_path = os.path.join(assets_dir, f"{unique_id}.tempfile.txt")
         with open(temp_file_path, 'wb') as f:
             f.write(b'\0' * (size_apk * 1024 * 1024 - 113999))
 
@@ -107,3 +107,11 @@ async def set_parameters(package_name, version_code, version_name):
 
 async def sign_apk(apk_path, keystore_path, keystore_alias, keystore_keypass, keystore_pass):
     await run_command_v2(["jarsigner","-verbose", "-sigalg", "SHA1withRSA", "-digestalg", "SHA1", "-keystore", keystore_path, "-storepass", keystore_pass, "-keypass", keystore_keypass, apk_path, keystore_alias, ])
+
+
+async def use_default_keystore():
+    keystore_path = f"../keystore/keystore-default.keystore"
+    keystore_pass = "test"
+    keystore_alias = "test"
+    key_pass = "password"
+    return keystore_path, keystore_pass, keystore_alias, key_pass

@@ -2,7 +2,7 @@ import os
 
 from flask import Flask, request, jsonify, send_file
 
-from apk_worker.apk_worker import generate_apk, return_io_stream, generate_apk_v2
+from apk_worker.apk_worker import generate_apk, return_io_stream, generate_apk_v2, use_default_keystore
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = './uploads'
@@ -17,12 +17,17 @@ async def generate_apk_route():
     version_code = data.get('version_code')
     version_name = data.get('version_name')
     size_apk = int(data.get('size_apk', 0))
-    keystore_alias = data.get('keystore_alias')
-    keystore_keypass = data.get('keystore_keypass')
-    keystore_pass = data.get('keystore_pass')
-    keystore_file = request.files['keystore_file']
-    keystore_path = os.path.join(app.config['UPLOAD_FOLDER'], keystore_file.filename)
-    keystore_file.save(keystore_path)
+    if request.files['keystore_file'] not in request.files:
+        keystore_path, keystore_pass, keystore_alias, keystore_keypass = await use_default_keystore()
+    else:
+        keystore_alias = data.get('keystore_alias')
+        keystore_keypass = data.get('keystore_keypass')
+        keystore_pass = data.get('keystore_pass')
+        keystore_file = request.files['keystore_file']
+        keystore_path = os.path.join(app.config['UPLOAD_FOLDER'], keystore_file.filename)
+        keystore_file.save(keystore_path)
+
+
 
     try:
         final_apk = await generate_apk(app.config['OUTPUTS_FOLDER'], package_name, version_code, version_name, size_apk,
