@@ -5,6 +5,13 @@ import org.gradle.internal.impldep.org.apache.commons.lang.ObjectUtils.Null
 lateinit var applicationId: String
 var versionCode: String? = null
 lateinit var versionName: String
+var storeFile: String? = null
+lateinit var storePassword: String
+lateinit var keyAlias: String
+lateinit var keyPassword: String
+
+
+
 
 plugins {
     alias(libs.plugins.android.application)
@@ -32,7 +39,19 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release"){
+        storeFile = file(System.getenv("KEYSTORE_PATH"))
+        storePassword = System.getenv("KEYSTORE_PASS")
+        keyAlias = System.getenv("KEY_ALIAS")
+        keyPassword = System.getenv("KEY_PASSWORD")
+        }
+    }
+
     buildTypes {
+        getByName("release") {
+        signingConfig = signingConfigs.getByName("release")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
