@@ -11,60 +11,83 @@
             padding: 0;
             background-color: #eef2f5;
             color: #333;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
         }
+
         .container {
-            max-width: 600px;
+            width: 600px;
             margin: 50px auto;
             background: #ffffff;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             padding: 30px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
+
         h1 {
             text-align: center;
             color: #007bff;
         }
+
         h3 {
             text-align: center;
             font-size: 16px;
+            margin-bottom: 10%;
         }
+
         h3 a {
             color: #007bff;
             text-decoration: none;
         }
+
         h3 a:hover {
             text-decoration: underline;
         }
+
         footer {
             text-align: center;
             padding: 20px 0;
             font-size: 14px;
             background-color: #f8f9fa;
-            margin-top: 30px;
+            margin-top: auto;
+            min-height: 50px;
         }
+
         footer a {
             color: #007bff;
             text-decoration: none;
         }
+
         form {
             display: flex;
             flex-direction: column;
             gap: 15px;
         }
+
         label {
             font-weight: 500;
         }
+
         input, select, button {
             padding: 12px;
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
         }
+
         input:focus, select:focus, button:focus {
             outline: none;
             border-color: #007bff;
             box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
         }
+
         button {
             background-color: #007bff;
             color: #fff;
@@ -72,21 +95,65 @@
             font-weight: bold;
             transition: background-color 0.3s;
         }
+
         button:hover {
             background-color: #0056b3;
         }
+
         .message {
             margin-top: 20px;
             text-align: center;
             font-size: 16px;
             color: #555;
         }
+
         .message.success {
             color: #28a745;
         }
+
         .message.error {
             color: #dc3545;
         }
+
+        .hidden {
+            display: none;
+        }
+
+        #keystoreFields {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .custom-file-label {
+            display: inline-block;
+            width: 100%;
+            padding: 12px;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #555;
+            text-align: center;
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .custom-file-label:hover {
+            background-color: #eef2f5;
+            border-color: #007bff;
+        }
+
+        .custom-file-label.selected {
+            color: #333;
+            font-weight: bold;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
     </style>
 </head>
 <body>
@@ -94,6 +161,12 @@
         <h1>APK Generator</h1>
         <h3>Learn how to create a keystore <a href="https://coderwall.com/p/r09hoq/android-generate-release-debug-keystores" target="_blank">here</a></h3>
         <form id="apkForm">
+            <label for="endpoint">Select Version</label>
+            <select id="endpoint">
+                <option value="/generate_apk">v1</option>
+                <option value="/generate_apk_v2">v2</option>
+            </select>
+
             <label for="package_name">Package Name</label>
             <input type="text" id="package_name" name="package_name" placeholder="com.example.app" required>
 
@@ -106,17 +179,19 @@
             <label for="size_apk">Size APK (MB)</label>
             <input type="number" id="size_apk" name="size_apk" placeholder="Optional">
 
-            <label for="keystore_file">Keystore File</label>
-            <input type="file" id="keystore_file" name="keystore_file" accept=".keystore, .jks" required>
+            <label for="keystore_file" class="custom-file-label">Upload Keystore File (optional)</label>
+            <input type="file" id="keystore_file" name="keystore_file" accept=".keystore, .jks">
 
-            <label for="keystore_alias">Keystore Alias</label>
-            <input type="text" id="keystore_alias" name="keystore_alias" placeholder="Alias Name" required>
+            <div id="keystoreFields" class="hidden">
+                <label for="keystore_alias">Keystore Alias</label>
+                <input type="text" id="keystore_alias" name="keystore_alias" placeholder="Alias Name">
 
-            <label for="keystore_keypass">Keystore Keypass</label>
-            <input type="password" id="keystore_keypass" name="keystore_keypass" placeholder="••••••••" required>
+                <label for="keystore_keypass">Keystore Keypass</label>
+                <input type="password" id="keystore_keypass" name="keystore_keypass" placeholder="••••••••">
 
-            <label for="keystore_pass">Keystore Pass</label>
-            <input type="password" id="keystore_pass" name="keystore_pass" placeholder="••••••••" required>
+                <label for="keystore_pass">Keystore Pass</label>
+                <input type="password" id="keystore_pass" name="keystore_pass" placeholder="••••••••">
+            </div>
 
             <button type="submit">Generate APK</button>
         </form>
@@ -131,12 +206,13 @@
             event.preventDefault();
 
             const formData = new FormData(this);
+            const endpoint = document.getElementById('endpoint').value;
             const messageDiv = document.getElementById('message');
             messageDiv.textContent = 'Generating APK...';
             messageDiv.className = 'message';
 
             try {
-                const response = await fetch('/generate_apk', {
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     body: formData
                 });
@@ -162,6 +238,49 @@
                 messageDiv.textContent = `Error: ${error.message}`;
                 messageDiv.classList.add('error');
             }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const keystoreFileInput = document.getElementById('keystore_file');
+            const fileLabel = document.querySelector('label[for="keystore_file"]');
+
+            keystoreFileInput.addEventListener('change', () => {
+                if (keystoreFileInput.files && keystoreFileInput.files.length > 0) {
+                    fileLabel.textContent = keystoreFileInput.files[0].name;
+                    fileLabel.classList.add('selected');
+                } else {
+                    fileLabel.textContent = 'Choose Keystore File';
+                    fileLabel.classList.remove('selected');
+                }
+            });
+
+            keystoreFileInput.addEventListener('change', () => {
+                const keystoreFields = document.getElementById('keystoreFields');
+                keystoreFields.classList.toggle('hidden', !keystoreFileInput.files.length);
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const keystoreFileInput = document.getElementById('keystore_file');
+            const allFields = document.querySelectorAll('label, input');
+            const visibleFields = ['keystore_file', 'package_name', 'version_code', 'version_name', 'size_apk'];
+
+            const toggleFieldsVisibility = (shouldShowKeystoreFields) => {
+                allFields.forEach(field => {
+                    const fieldId = field.id || field.htmlFor;
+                    if (!fieldId || visibleFields.includes(fieldId)) {
+                        return;
+                    }
+                    field.classList.toggle('hidden', !shouldShowKeystoreFields);
+                });
+            };
+
+            toggleFieldsVisibility(keystoreFileInput.files && keystoreFileInput.files.length > 0);
+
+            keystoreFileInput.addEventListener('change', () => {
+                toggleFieldsVisibility(keystoreFileInput.files && keystoreFileInput.files.length > 0);
+            });
         });
     </script>
 </body>
