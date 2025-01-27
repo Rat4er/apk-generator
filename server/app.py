@@ -3,10 +3,10 @@ import os
 from flask import Flask, request, jsonify, send_file
 
 from apk_worker.apk_worker import generate_apk, return_io_stream, generate_apk_v2, use_default_keystore
-from form_parser import parse_form
+from server.form_parser import parse_form
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = '/uploads'
-app.config['OUTPUTS_FOLDER'] = '/outputs'
+app.config['UPLOAD_FOLDER'] = './uploads'
+app.config['OUTPUTS_FOLDER'] = './outputs'
 
 @app.route('/generate_apk', methods=['POST'])
 async def generate_apk_route():

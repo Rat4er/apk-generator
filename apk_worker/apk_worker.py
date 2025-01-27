@@ -16,15 +16,16 @@ async def generate_apk_v2(package_name, version_code, version_name, size_apk, ke
     unique_id = str(uuid.uuid4())
     assets_dir = f"./apk_data_v2/app/src/main/assets/"
     os.makedirs(assets_dir, exist_ok=True)
-    await set_parameters(package_name, version_code, version_name)
+    await set_parameters(package_name, version_code, version_name, keystore_path, keystore_password, alias, keypass)
     if size_apk > 0:
         temp_file_path = os.path.join(assets_dir, f"{unique_id}.tempfile.txt")
         with open(temp_file_path, 'wb') as f:
             f.write(b'\0' * (size_apk * 1024 * 1024 - 113999))
 
     await run_command_v2(['./gradlew', 'assembleRelease'])
-    apk_path = os.path.join("apk_data_v2", "app", "build", "outputs", "release", "app-release-unsigned.apk")
-    await sign_apk(apk_path, keystore_path, alias, keypass, keystore_password)
+    #apk_path = os.path.join("apk_data_v2", "app", "build", "outputs", "release", "app-release-unsigned.apk")
+    #await run_android_container()
+    #await sign_apk(apk_path, keystore_path, alias, keypass, keystore_password)
 
 
 
@@ -100,10 +101,14 @@ async def return_io_stream(apk_path):
     os.remove(apk_path)
     return return_stream
 
-async def set_parameters(package_name, version_code, version_name):
+async def set_parameters(package_name, version_code, version_name, keystore_path, keystore_password, alias, keypass):
     os.environ["APPLICATION_ID"] = package_name
     os.environ["VERSION_CODE"] = version_code
     os.environ["VERSION_NAME"] = version_name
+    os.environ["KEYSTORE_PATH"] = keystore_path
+    os.environ["KEYSTORE_PASS"] = keystore_password
+    os.environ["KEY_ALIAS"] = alias
+    os.environ["KEY_PASSWORD"] = keypass
 
 async def sign_apk(apk_path, keystore_path, keystore_alias, keystore_keypass, keystore_pass):
     await run_command_v2(["jarsigner","-verbose", "-sigalg", "SHA1withRSA", "-digestalg", "SHA1", "-keystore", keystore_path, "-storepass", keystore_pass, "-keypass", keystore_keypass, apk_path, keystore_alias, ])

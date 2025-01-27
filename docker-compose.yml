@@ -8,6 +8,8 @@ services:
     volumes:
       - ./uploads:/app/uploads
       - ./outputs:/app/outputs
+    ports:
+      - "5000:5000"
     networks:
       - app_network
 
@@ -25,6 +27,7 @@ services:
       - app
     networks:
       - app_network
+
       
 networks:
   app_network:
