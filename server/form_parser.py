@@ -19,4 +19,5 @@ async def parse_form(request, keystore_path):
         keystore_file = request.files['keystore_file']
         keystore_path = os.path.join(keystore_path, keystore_file.filename)
         keystore_file.save(keystore_path)
-        return package_name, version_code, version_name, size_apk, keystore_path, keystore_pass, keystore_alias, keystore_keypass
+        keystore_absolute = os.path.abspath(keystore_path)
+        return package_name, version_code, version_name, size_apk, keystore_absolute, keystore_pass, keystore_alias, keystore_keypass

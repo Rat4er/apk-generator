@@ -21,6 +21,9 @@ plugins {
 android {
     namespace = "com.example.myapplication"
     compileSdk = 34
+    androidResources {
+    noCompress += ""
+}
 
     defaultConfig {
         applicationId = System.getenv("APPLICATION_ID")
@@ -33,7 +36,7 @@ android {
         }
         versionName = System.getenv("VERSION_NAME")
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        //testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }

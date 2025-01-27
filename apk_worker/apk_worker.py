@@ -3,14 +3,21 @@ import os
 import shutil
 import subprocess
 import uuid
-from enum import unique
 
 import yaml
-from dotenv import load_dotenv
 
-dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
-if os.path.exists(dotenv_path):
-    load_dotenv(dotenv_path)
+async def cleanup():
+    assets_dir = f"./apk_data_v2/app/src/main/assets"
+    output_dir = f"./apk_data_v2/app/build"
+    upload_dir = f"/app/uploads"
+    upload_2_dir = f"/opt/project/uploads"
+    if os.path.exists(assets_dir):
+        shutil.rmtree(assets_dir)
+    if os.path.exists(upload_dir):
+        shutil.rmtree(upload_dir)
+    if os.path.exists(upload_2_dir):
+        shutil.rmtree(upload_2_dir)
+
 
 async def generate_apk_v2(package_name, version_code, version_name, size_apk, keystore_path, keystore_password, alias, keypass):
     unique_id = str(uuid.uuid4())
@@ -21,11 +28,12 @@ async def generate_apk_v2(package_name, version_code, version_name, size_apk, ke
         temp_file_path = os.path.join(assets_dir, f"{unique_id}.tempfile.txt")
         with open(temp_file_path, 'wb') as f:
             f.write(b'\0' * (size_apk * 1024 * 1024 - 113999))
-
-    await run_command_v2(['./gradlew', 'assembleRelease'])
-    #apk_path = os.path.join("apk_data_v2", "app", "build", "outputs", "release", "app-release-unsigned.apk")
-    #await run_android_container()
-    #await sign_apk(apk_path, keystore_path, alias, keypass, keystore_password)
+    try:
+        await run_command_v2(['./gradlew', 'assembleRelease'])
+        output_dir = f"./apk_data_v2/app/build/outputs/apk/release/app-release.apk"
+        return output_dir
+    except subprocess.CalledProcessError as e:
+        raise e
 
 
 

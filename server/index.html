@@ -13,7 +13,7 @@
             color: #333;
             display: flex;
             flex-direction: column;
-            height: 100vh; /* Занимает всю высоту экрана */
+            height: 100vh;
         }
 
         .container {
@@ -23,10 +23,10 @@
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             padding: 30px;
-            flex-grow: 1; /* Растягиваем контейнер на доступное пространство */
+            flex-grow: 1;
             display: flex;
             flex-direction: column;
-            justify-content: space-between; /* Выравнивание элементов по вертикали */
+            justify-content: space-between;
         }
 
         h1 {
@@ -54,7 +54,7 @@
             padding: 20px 0;
             font-size: 14px;
             background-color: #f8f9fa;
-            margin-top: auto; /* Это заставит футер всегда быть внизу */
+            margin-top: auto;
             min-height: 50px;
         }
 
@@ -161,6 +161,12 @@
         <h1>APK Generator</h1>
         <h3>Learn how to create a keystore <a href="https://coderwall.com/p/r09hoq/android-generate-release-debug-keystores" target="_blank">here</a></h3>
         <form id="apkForm">
+            <label for="endpoint">Select Version</label>
+            <select id="endpoint">
+                <option value="/generate_apk">v1</option>
+                <option value="/generate_apk_v2">v2</option>
+            </select>
+
             <label for="package_name">Package Name</label>
             <input type="text" id="package_name" name="package_name" placeholder="com.example.app" required>
 
@@ -175,7 +181,6 @@
 
             <label for="keystore_file" class="custom-file-label">Upload Keystore File (optional)</label>
             <input type="file" id="keystore_file" name="keystore_file" accept=".keystore, .jks">
-
 
             <div id="keystoreFields" class="hidden">
                 <label for="keystore_alias">Keystore Alias</label>
@@ -201,12 +206,13 @@
             event.preventDefault();
 
             const formData = new FormData(this);
+            const endpoint = document.getElementById('endpoint').value;
             const messageDiv = document.getElementById('message');
             messageDiv.textContent = 'Generating APK...';
             messageDiv.className = 'message';
 
             try {
-                const response = await fetch('/generate_apk', {
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     body: formData
                 });
@@ -233,6 +239,26 @@
                 messageDiv.classList.add('error');
             }
         });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const keystoreFileInput = document.getElementById('keystore_file');
+            const fileLabel = document.querySelector('label[for="keystore_file"]');
+
+            keystoreFileInput.addEventListener('change', () => {
+                if (keystoreFileInput.files && keystoreFileInput.files.length > 0) {
+                    fileLabel.textContent = keystoreFileInput.files[0].name;
+                    fileLabel.classList.add('selected');
+                } else {
+                    fileLabel.textContent = 'Choose Keystore File';
+                    fileLabel.classList.remove('selected');
+                }
+            });
+
+            keystoreFileInput.addEventListener('change', () => {
+                const keystoreFields = document.getElementById('keystoreFields');
+                keystoreFields.classList.toggle('hidden', !keystoreFileInput.files.length);
+            });
+        });
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -254,23 +280,6 @@
 
             keystoreFileInput.addEventListener('change', () => {
                 toggleFieldsVisibility(keystoreFileInput.files && keystoreFileInput.files.length > 0);
-            });
-        });
-    </script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const keystoreFileInput = document.getElementById('keystore_file');
-            const fileLabel = document.querySelector('label[for="keystore_file"]');
-
-            keystoreFileInput.addEventListener('change', () => {
-                if (keystoreFileInput.files && keystoreFileInput.files.length > 0) {
-                    fileLabel.textContent = keystoreFileInput.files[0].name;
-                    fileLabel.classList.add('selected');
-                } else {
-                    fileLabel.textContent = 'Choose Keystore File';
-                    fileLabel.classList.remove('selected');
-                }
             });
         });
     </script>
