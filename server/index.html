@@ -207,6 +207,10 @@
 
             const formData = new FormData(this);
             const endpoint = document.getElementById('endpoint').value;
+
+            if (!document.getElementById('keystore_file').value) {
+                formData.set('keystore_file', null)
+            }
             const messageDiv = document.getElementById('message');
             messageDiv.textContent = 'Generating APK...';
             messageDiv.className = 'message';

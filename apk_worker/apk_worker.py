@@ -68,7 +68,7 @@ async def generate_apk(output_folder, package_name, version_code, version_name, 
             os.remove(output_apk)
         if os.path.exists(assets_dir):
             shutil.rmtree(assets_dir)
-        if os.path.exists(keystore_path):
+        if os.path.exists(keystore_path) and "public" not in keystore_path:
             os.remove(keystore_path)
 
 
@@ -123,8 +123,8 @@ async def sign_apk(apk_path, keystore_path, keystore_alias, keystore_keypass, ke
 
 
 async def use_default_keystore():
-    keystore_path = f"../keystore/keystore-default.keystore"
-    keystore_pass = "test"
-    keystore_alias = "test"
-    key_pass = "password"
+    keystore_path = f"./utils/public.jks"
+    keystore_pass = "123456"
+    keystore_alias = "main"
+    key_pass = "123456"
     return keystore_path, keystore_pass, keystore_alias, key_pass
